@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentación del Proyecto - Práctica de Cifrado y Redes</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 30px 15px;
+      display: flex;
+      justify-content: center;
+    }
+    .markdown-body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 980px;
+      width: 100%;
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 45px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    table {
+      width: 100% !important;
+      display: table !important;
+      border-collapse: collapse !important;
+      margin: 20px 0 !important;
+    }
+    th, td {
+      border: 1px solid #30363d !important;
+      padding: 10px 14px !important;
+    }
+    th {
+      background-color: #21262d !important;
+      color: #58a6ff !important;
+    }
+    tr:nth-child(even) {
+      background-color: #161b22 !important;
+    }
+    tr:nth-child(odd) {
+      background-color: #0d1117 !important;
+    }
+    code {
+      background-color: rgba(110,118,129,0.4) !important;
+      color: #79c0ff !important;
+      padding: 2px 6px !important;
+      border-radius: 4px !important;
+      font-family: 'Consolas', 'Courier New', monospace !important;
+    }
+    pre code {
+      background-color: transparent !important;
+      padding: 0 !important;
+      color: #e6edf3 !important;
+    }
+    .badge-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #58a6ff;
+    }
+    .badge-green { color: #3fb950; border-color: rgba(63,185,80,0.4); }
+    .badge-purple { color: #bc8cff; border-color: rgba(188,140,255,0.4); }
+    .top-banner {
+      background: linear-gradient(135deg, rgba(56,189,248,0.1), rgba(139,92,246,0.1));
+      border: 1px solid rgba(56,189,248,0.3);
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <article class="markdown-body">
+    <div class="top-banner">
+      <div class="badge-bar">
+        <span class="badge"><i class="fa-solid fa-network-wired"></i> Topología WAN Frame-Relay</span>
+        <span class="badge badge-green"><i class="fa-solid fa-shield-halved"></i> Cifrados: César, Vigenère, Vernam</span>
+        <span class="badge badge-purple"><i class="fa-solid fa-laptop-code"></i> Cisco Packet Tracer &amp; Python Flask</span>
+      </div>
+      <p style="margin: 0; font-size: 14px; color: #8b949e;">
+        <strong>Documentación Oficial de la Práctica</strong> &bull; Administración y Seguridad de Redes &bull; 2026
+      </p>
+    </div>
+
+    <h1>Práctica de Administración y Seguridad de Redes: Topología WAN y Cifrado</h1>
+    <p>Guía completa y detallada para el montaje de la topología en <strong>Cisco Packet Tracer</strong>, la implementación en <strong>equipos físicos (2 laptops + routers)</strong>, y el funcionamiento de la <strong>aplicación web de cifrado y descifrado</strong>.</p>
+
+    <hr>
+
+    <h2>1. Diagrama de la Topología y Modelos Exactos de Equipos</h2>
+    <img src="topologia_red_detallada.jpg" alt="Topología de Red Detallada" style="width: 100%; border-radius: 8px; border: 1px solid #30363d; margin: 15px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+    <p>La topología reproduce con exactitud el esquema de la pizarra:</p>
+    
+    <pre><code>[ PC 1 ] ──(Fa0)──► [ Switch 1 ] ──(Gig0/0)──► [ Router 1 ] ──(Se0/0/0)──► ┌──────────────┐
+                                                                           │   NUBE WAN   │
+[ PC 2 ] ◄──(Fa0)── [ Switch 2 ] ◄──(Gig0/0)── [ Router 2 ] ◄──(Se0/0/0)── └──────────────┘</code></pre>
+
+    <h3>Modelos de Dispositivos a Elegir en Cisco Packet Tracer:</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Dispositivo</th>
+          <th>Modelo en Packet Tracer</th>
+          <th>Nombre / Rol</th>
+          <th>Módulos Requeridos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>PC 1</strong></td>
+          <td><code>PC-PT</code> (End Devices)</td>
+          <td>PC1 (Emisor / Laptop 1)</td>
+          <td>Tarjeta FastEthernet por defecto</td>
+        </tr>
+        <tr>
+          <td><strong>Switch 1</strong></td>
+          <td><code>2960-24TT</code> (Switches)</td>
+          <td>SW1</td>
+          <td>24 puertos FastEthernet + 2 Gigabit</td>
+        </tr>
+        <tr>
+          <td><strong>Router 1</strong></td>
+          <td><code>1941</code> o <code>2811</code> (Routers)</td>
+          <td>R1</td>
+          <td><strong>Módulo <code>HWIC-2T</code></strong> (para puertos seriales)</td>
+        </tr>
+        <tr>
+          <td><strong>Nube WAN</strong></td>
+          <td><code>Cloud-PT</code> (WAN Emulation)</td>
+          <td>Nube WAN</td>
+          <td>Módulos seriales por defecto</td>
+        </tr>
+        <tr>
+          <td><strong>Router 2</strong></td>
+          <td><code>1941</code> o <code>2811</code> (Routers)</td>
+          <td>R2</td>
+          <td><strong>Módulo <code>HWIC-2T</code></strong> (para puertos seriales)</td>
+        </tr>
+        <tr>
+          <td><strong>Switch 2</strong></td>
+          <td><code>2960-24TT</code> (Switches)</td>
+          <td>SW2</td>
+          <td>24 puertos FastEthernet + 2 Gigabit</td>
+        </tr>
+        <tr>
+          <td><strong>PC 2</strong></td>
+          <td><code>PC-PT</code> o <code>Server-PT</code></td>
+          <td>PC2 (Receptor / Servidor Web)</td>
+          <td>Tarjeta FastEthernet por defecto</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <blockquote>
+      <p><strong>💡 Cómo agregar puertos Seriales a los Routers 1941 en Packet Tracer:</strong><br>
+      1. Haz clic sobre el router <code>R1</code>.<br>
+      2. En la pestaña <strong>Physical</strong>, haz clic en el interruptor para <strong>apagar el router</strong>.<br>
+      3. En la lista izquierda de módulos, selecciona <strong><code>HWIC-2T</code></strong>.<br>
+      4. Arrastra la tarjeta a la ranura vacía derecha (<code>Slot 0</code>).<br>
+      5. Vuelve a hacer clic en el interruptor para <strong>encender el router</strong>.<br>
+      6. Repite el mismo procedimiento en <code>R2</code>.</p>
+    </blockquote>
+
+    <hr>
+
+    <h2>2. Tabla Maestra de Direccionamiento IP, Puertos y Cableado</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Dispositivo</th>
+          <th>Interfaz</th>
+          <th>Dirección IP</th>
+          <th>Máscara</th>
+          <th>Gateway</th>
+          <th>Tipo de Cable</th>
+          <th>Conecta a</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>PC 1</strong></td>
+          <td><code>FastEthernet0</code></td>
+          <td><code>192.168.10.10</code></td>
+          <td><code>255.255.255.0</code></td>
+          <td><code>192.168.10.1</code></td>
+          <td>Directo (Cobre - Negro)</td>
+          <td>Switch 1 <code>Fa0/1</code></td>
+        </tr>
+        <tr>
+          <td><strong>Switch 1</strong></td>
+          <td><code>Vlan 1</code></td>
+          <td><code>192.168.10.2</code></td>
+          <td><code>255.255.255.0</code></td>
+          <td><code>192.168.10.1</code></td>
+          <td>Directo (Cobre - Negro)</td>
+          <td>Router 1 <code>Gig0/0</code> desde <code>Fa0/24</code></td>
+        </tr>
+        <tr>
+          <td><strong>Router 1</strong></td>
+          <td><code>Gig0/0</code><br><code>Serial0/0/0</code></td>
+          <td><code>192.168.10.1</code><br><code>10.0.0.1</code></td>
+          <td><code>255.255.255.0</code><br><code>255.255.255.252</code></td>
+          <td>N/A<br>N/A</td>
+          <td>Directo a SW1<br><strong>Serial DTE (Rojo con reloj)</strong></td>
+          <td>Conecta a SW1 <code>Fa0/24</code><br>Conecta a Nube <code>Serial0</code></td>
+        </tr>
+        <tr>
+          <td><strong>Nube WAN</strong></td>
+          <td><code>Serial0</code><br><code>Serial1</code></td>
+          <td>Frame-Relay<br>Frame-Relay</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td>Serial DTE</td>
+          <td>R1 <code>Serial0/0/0</code><br>R2 <code>Serial0/0/0</code></td>
+        </tr>
+        <tr>
+          <td><strong>Router 2</strong></td>
+          <td><code>Serial0/0/0</code><br><code>Gig0/0</code></td>
+          <td><code>10.0.0.2</code><br><code>192.168.20.1</code></td>
+          <td><code>255.255.255.252</code><br><code>255.255.255.0</code></td>
+          <td>N/A<br>N/A</td>
+          <td><strong>Serial DTE (Rojo con reloj)</strong><br>Directo a SW2</td>
+          <td>Conecta a Nube <code>Serial1</code><br>Conecta a SW2 <code>Fa0/24</code></td>
+        </tr>
+        <tr>
+          <td><strong>Switch 2</strong></td>
+          <td><code>Vlan 1</code></td>
+          <td><code>192.168.20.2</code></td>
+          <td><code>255.255.255.0</code></td>
+          <td><code>192.168.20.1</code></td>
+          <td>Directo (Cobre - Negro)</td>
+          <td>Router 2 <code>Gig0/0</code> desde <code>Fa0/24</code></td>
+        </tr>
+        <tr>
+          <td><strong>PC 2</strong></td>
+          <td><code>FastEthernet0</code></td>
+          <td><code>192.168.20.10</code></td>
+          <td><code>255.255.255.0</code></td>
+          <td><code>192.168.20.1</code></td>
+          <td>Directo (Cobre - Negro)</td>
+          <td>Switch 2 <code>Fa0/1</code> (Puerto Web 5000)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr>
+
+    <h2>3. Conexiones Interfaz por Interfaz (Paso a Paso)</h2>
+    <p>Este apartado detalla exactamente qué puerto físico se conecta con cuál en toda la topología, el cable que debes seleccionar en Cisco Packet Tracer y el propósito de cada enlace:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align: center;">#</th>
+          <th>Dispositivo Origen</th>
+          <th>Interfaz Origen</th>
+          <th>Dispositivo Destino</th>
+          <th>Interfaz Destino</th>
+          <th>Herramienta de Cable en Packet Tracer</th>
+          <th>Color / Icono en PT</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="text-align: center; font-weight: bold;">1</td>
+          <td><strong>PC 1</strong></td>
+          <td><code>FastEthernet 0</code></td>
+          <td><strong>Switch 1</strong></td>
+          <td><code>FastEthernet 0/1</code></td>
+          <td><strong>Copper Straight-Through</strong> (Directo)</td>
+          <td>Línea continua <strong>Negra</strong></td>
+        </tr>
+        <tr>
+          <td style="text-align: center; font-weight: bold;">2</td>
+          <td><strong>Switch 1</strong></td>
+          <td><code>FastEthernet 0/24</code></td>
+          <td><strong>Router 1</strong></td>
+          <td><code>GigabitEthernet 0/0</code></td>
+          <td><strong>Copper Straight-Through</strong> (Directo)</td>
+          <td>Línea continua <strong>Negra</strong></td>
+        </tr>
+        <tr>
+          <td style="text-align: center; font-weight: bold;">3</td>
+          <td><strong>Router 1</strong></td>
+          <td><code>Serial 0/0/0</code></td>
+          <td><strong>Nube WAN</strong></td>
+          <td><code>Serial 0</code></td>
+          <td><strong>Serial DTE</strong></td>
+          <td>Línea en zigzag <strong>Roja</strong> con reloj</td>
+        </tr>
+        <tr>
+          <td style="text-align: center; font-weight: bold;">4</td>
+          <td><strong>Nube WAN</strong></td>
+          <td><code>Serial 1</code></td>
+          <td><strong>Router 2</strong></td>
+          <td><code>Serial 0/0/0</code></td>
+          <td><strong>Serial DTE</strong></td>
+          <td>Línea en zigzag <strong>Roja</strong> con reloj</td>
+        </tr>
+        <tr>
+          <td style="text-align: center; font-weight: bold;">5</td>
+          <td><strong>Router 2</strong></td>
+          <td><code>GigabitEthernet 0/0</code></td>
+          <td><strong>Switch 2</strong></td>
+          <td><code>FastEthernet 0/24</code></td>
+          <td><strong>Copper Straight-Through</strong> (Directo)</td>
+          <td>Línea continua <strong>Negra</strong></td>
+        </tr>
+        <tr>
+          <td style="text-align: center; font-weight: bold;">6</td>
+          <td><strong>Switch 2</strong></td>
+          <td><code>FastEthernet 0/1</code></td>
+          <td><strong>PC 2</strong></td>
+          <td><code>FastEthernet 0</code></td>
+          <td><strong>Copper Straight-Through</strong> (Directo)</td>
+          <td>Línea continua <strong>Negra</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Explicación Detallada de Cada Conexión:</h3>
+    <ul>
+      <li><strong>1. PC 1 &rarr; Switch 1:</strong> Cable directo de cobre desde <code>FastEthernet 0</code> de la PC hacia <code>Fa0/1</code> del switch. Da acceso a la PC a la LAN 1.</li>
+      <li><strong>2. Switch 1 &rarr; Router 1:</strong> Cable directo de cobre desde <code>Fa0/24</code> (uplink del switch) hacia <code>Gig0/0</code> del router. Conecta la LAN con su Gateway <code>192.168.10.1</code>.</li>
+      <li><strong>3. Router 1 &rarr; Nube WAN:</strong> Cable serial rojo (Serial DTE) desde <code>Serial 0/0/0</code> del router hacia <code>Serial 0</code> de la Nube (circuito Frame-Relay DLCI <code>102</code>).</li>
+      <li><strong>4. Nube WAN &rarr; Router 2:</strong> Cable serial rojo (Serial DTE) desde <code>Serial 1</code> de la Nube hacia <code>Serial 0/0/0</code> del router 2 (circuito Frame-Relay DLCI <code>201</code>).</li>
+      <li><strong>5. Router 2 &rarr; Switch 2:</strong> Cable directo de cobre desde <code>Gig0/0</code> del router 2 (Gateway <code>192.168.20.1</code>) hacia <code>Fa0/24</code> del switch 2.</li>
+      <li><strong>6. Switch 2 &rarr; PC 2:</strong> Cable directo de cobre desde <code>Fa0/1</code> del switch hacia <code>FastEthernet 0</code> de la PC 2 / Servidor.</li>
+    </ul>
+
+    <hr>
+
+    <h2>4. Paso a Paso: Cómo Configurar la Nube WAN en Packet Tracer</h2>
+    <p>La nube emula una red WAN de conmutación de paquetes mediante el protocolo <strong>Frame Relay</strong>.</p>
+    <ol>
+      <li>Haz clic sobre el dispositivo <strong><code>Cloud-PT</code></strong>.</li>
+      <li>Ve a la pestaña <strong><code>Config</code></strong>.</li>
+      <li><strong>Paso 3.1 - Configurar las Interfaces Seriales</strong>:
+        <ul>
+          <li>En el menú izquierdo, bajo <strong><code>INTERFACES</code></strong>, haz clic en <strong><code>Serial0</code></strong>:
+            <ul>
+              <li>En <strong><code>DLCI</code></strong>, escribe: <code>102</code></li>
+              <li>En <strong><code>Name</code></strong>, escribe: <code>R1-a-R2</code></li>
+              <li>Haz clic en el botón <strong><code>Add</code></strong>.</li>
+            </ul>
+          </li>
+          <li>En el menú izquierdo, haz clic en <strong><code>Serial1</code></strong>:
+            <ul>
+              <li>En <strong><code>DLCI</code></strong>, escribe: <code>201</code></li>
+              <li>En <strong><code>Name</code></strong>, escribe: <code>R2-a-R1</code></li>
+              <li>Haz clic en el botón <strong><code>Add</code></strong>.</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><strong>Paso 3.2 - Crear el Puente Frame Relay</strong>:
+        <ul>
+          <li>En el menú izquierdo, bajo <strong><code>CONNECTIONS</code></strong>, haz clic en <strong><code>Frame Relay</code></strong>.</li>
+          <li>En el selector de la izquierda (Serial0), elige: <code>102 R1-a-R2</code>.</li>
+          <li>En el selector de la derecha (Serial1), elige: <code>201 R2-a-R1</code>.</li>
+          <li>Haz clic en el botón <strong><code>Add</code></strong>.</li>
+          <li>Verás en la tabla la ruta bidireccional: <code>Serial0: 102 &lt;----&gt; Serial1: 201</code>.</li>
+        </ul>
+      </li>
+      <li>Cierra la ventana de la Nube. ¡Listo!</li>
+    </ol>
+
+    <hr>
+
+    <h2>5. Comandos para Routers (CLI)</h2>
+
+    <h3>Router 1 (R1 - Lado Emisor):</h3>
+    <pre><code>enable
+configure terminal
+hostname R1
+no ip domain-lookup
+
+! Interfaz LAN 1 hacia Switch 1
+interface GigabitEthernet0/0
+ description Enlace a LAN 1
+ ip address 192.168.10.1 255.255.255.0
+ no shutdown
+ exit
+
+! Interfaz Serial hacia Nube WAN
+interface Serial0/0/0
+ description Enlace WAN hacia Nube Frame-Relay
+ ip address 10.0.0.1 255.255.255.252
+ encapsulation frame-relay
+ frame-relay map ip 10.0.0.2 102 broadcast
+ no shutdown
+ exit
+
+! Ruta estática para alcanzar la LAN 2
+ip route 192.168.20.0 255.255.255.0 10.0.0.2
+end
+write memory</code></pre>
+
+    <h3>Router 2 (R2 - Lado Receptor):</h3>
+    <pre><code>enable
+configure terminal
+hostname R2
+no ip domain-lookup
+
+! Interfaz LAN 2 hacia Switch 2
+interface GigabitEthernet0/0
+ description Enlace a LAN 2
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+ exit
+
+! Interfaz Serial hacia Nube WAN
+interface Serial0/0/0
+ description Enlace WAN hacia Nube Frame-Relay
+ ip address 10.0.0.2 255.255.255.252
+ encapsulation frame-relay
+ frame-relay map ip 10.0.0.1 201 broadcast
+ no shutdown
+ exit
+
+! Ruta estática para alcanzar la LAN 1
+ip route 192.168.10.0 255.255.255.0 10.0.0.1
+end
+write memory</code></pre>
+
+    <hr>
+
+    <h2>6. Cómo Mostrar la Página Web DENTRO de Cisco Packet Tracer</h2>
+    <ol>
+      <li>En Packet Tracer, coloca un <strong><code>Server-PT</code></strong> en LAN 2 con IP <code>192.168.20.10</code> y Gateway <code>192.168.20.1</code>.</li>
+      <li>Haz clic en el <code>Server-PT</code> &rarr; pestaña <strong><code>Services</code></strong> &rarr; <strong><code>HTTP</code></strong>.</li>
+      <li>Asegúrate de que HTTP esté en <strong><code>On</code></strong>.</li>
+      <li>Busca <code>index.html</code>, haz clic en <strong><code>edit</code></strong>, borra lo que tiene y pega el contenido del archivo <code>packet_tracer_web/index.html</code>. Haz clic en <strong><code>Save</code></strong>.</li>
+      <li>En <strong>PC 1</strong>: haz clic en <code>Desktop</code> &rarr; abre <strong><code>Web Browser</code></strong> &rarr; escribe <code>http://192.168.20.10</code> y presiona <strong><code>Go</code></strong>.</li>
+      <li>¡La aplicación web se ejecutará directamente dentro de la simulación de Packet Tracer!</li>
+    </ol>
+
+    <hr>
+
+    <h2>7. Cómo Montar el Proyecto con Equipos Físicos Reales (2 Laptops + Routers)</h2>
+    <p>Cuando lleves el proyecto al laboratorio con <strong>routers, switches y laptops reales</strong>, sigue estos pasos:</p>
+
+    <h3>7.1 ¿Cómo se hace la "Nube" en la vida real?</h3>
+    <p>En un laboratorio físico no hay una nube de internet flotante. La "Nube WAN" entre Router 1 y Router 2 se hace de una de estas dos formas:</p>
+    <ul>
+      <li><strong>Opción A (Cable Serial V.35 / Smart Serial DCE-DTE):</strong> Se conectan R1 y R2 con un cable serial. El extremo <strong>DCE</strong> se conecta en R1 y se le configura <code>clock rate 64000</code> (este extremo simula el reloj del proveedor de la nube).</li>
+      <li><strong>Opción B (Cable Ethernet Directo RJ-45):</strong> En routers modernos sin puertos seriales, se conecta un cable de red directo de <code>GigabitEthernet 0/1</code> de R1 a <code>GigabitEthernet 0/1</code> de R2, con la subred WAN <code>10.0.0.0/30</code>.</li>
+    </ul>
+
+    <h3>7.2 Configuración de las 2 Laptops en Windows (Paso a Paso)</h3>
+    <p>En cada laptop presiona <code>Win + R</code>, escribe <code>ncpa.cpl</code>, clic derecho en <strong>Ethernet</strong> &rarr; <strong>Propiedades</strong> &rarr; <strong>TCP/IPv4</strong>:</p>
+    <ol>
+      <li><strong>Laptop 1 (Emisor - Conectada a Switch 1 puerto Fa0/1):</strong>
+        <ul>
+          <li>IP: <code>192.168.10.10</code></li>
+          <li>Máscara: <code>255.255.255.0</code></li>
+          <li>Puerta de enlace: <code>192.168.10.1</code></li>
+        </ul>
+      </li>
+      <li><strong>Laptop 2 (Receptor - Conectada a Switch 2 puerto Fa0/1):</strong>
+        <ul>
+          <li>IP: <code>192.168.20.10</code></li>
+          <li>Máscara: <code>255.255.255.0</code></li>
+          <li>Puerta de enlace: <code>192.168.20.1</code></li>
+        </ul>
+      </li>
+    </ol>
+
+    <blockquote>
+      <p><strong>⚠️ Paso Crítico en Laptop 2 (Firewall de Windows):</strong><br>
+      Por defecto Windows bloquea conexiones entrantes de otras subredes en el puerto 5000. En <strong>Laptop 2</strong>, abre <code>firewall.cpl</code> y desactiva temporalmente el Firewall de Windows Defender para redes privadas, o agrega una excepción para el puerto TCP <code>5000</code>.</p>
+    </blockquote>
+
+    <h3>7.3 Ejecución de la Aplicación Web entre las 2 Laptops</h3>
+    <ol>
+      <li><strong>En Laptop 2 (Receptor):</strong>
+        <ul>
+          <li>Inicia la app con <code>iniciar_app.bat</code>.</li>
+          <li>Abre el navegador en: <code>http://localhost:5000/receiver</code>.</li>
+          <li>Se queda escuchando paquetes en tiempo real en la bandeja de entrada.</li>
+        </ul>
+      </li>
+      <li><strong>En Laptop 1 (Emisor):</strong>
+        <ul>
+          <li>Inicia la app con <code>iniciar_app.bat</code> y abre <code>http://localhost:5000/sender</code>.</li>
+          <li>En el campo <strong>"Destino en la Red"</strong> escribe: <code>http://192.168.20.10:5000/api/receive</code>.</li>
+          <li>Escribe el mensaje o carga un archivo <code>.txt</code>, elige <strong>César</strong>, <strong>Vigenère</strong> o <strong>Vernam</strong>, ingresa la clave $K$, presiona <strong>"Ejecutar Cifrado"</strong> y luego <strong>"Transmitir a PC 2 (Topología WAN)"</strong>.</li>
+        </ul>
+      </li>
+      <li><strong>En Laptop 2:</strong>
+        <ul>
+          <li>¡Aparecerá inmediatamente el mensaje cifrado que viajó por los cables y routers!</li>
+          <li>Presionas <strong>Cargar</strong>, introduces la clave $K$, le das a <strong>"Descifrar Mensaje"</strong> y finalmente <strong>"Descargar Archivo .txt (Descifrado) ✔"</strong>.</li>
+        </ul>
+      </li>
+    </ol>
+  </article>
+
+</body>
+</html>

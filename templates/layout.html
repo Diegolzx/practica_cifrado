@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Práctica de Cifrado y Seguridad de Redes{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+  <nav class="navbar">
+    <a href="{{ url_for('index') }}" class="nav-brand">
+      <span class="brand-icon"><i class="fa-solid fa-shield-halved text-cyan"></i></span>
+      <span>NetSec Cifrado</span>
+      <span class="brand-badge">WAN v1.0</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="{{ url_for('index') }}" class="nav-item {% if request.path == '/' %}active{% endif %}">
+        <i class="fa-solid fa-network-wired"></i> Topología
+      </a>
+      <a href="{{ url_for('sender_view') }}" class="nav-item {% if request.path == '/sender' %}active{% endif %}">
+        <i class="fa-solid fa-laptop"></i> PC 1 (Emisor)
+      </a>
+      <a href="{{ url_for('receiver_view') }}" class="nav-item {% if request.path == '/receiver' %}active{% endif %}">
+        <i class="fa-solid fa-server"></i> PC 2 (Receptor)
+      </a>
+    </div>
+  </nav>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>Administración y Seguridad de Redes &bull; Topología WAN con Cifrado César, Vigenère y Vernam &bull; 2026</p>
+  </footer>
+
+  <!-- JAVASCRIPT GLOBAL -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

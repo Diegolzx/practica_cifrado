@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documento Técnico: Red WAN y Sistema Criptográfico</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    body {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 30px 15px;
+      display: flex;
+      justify-content: center;
+    }
+    .markdown-body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 1000px;
+      width: 100%;
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 45px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    table {
+      width: 100% !important;
+      display: table !important;
+      border-collapse: collapse !important;
+      margin: 20px 0 !important;
+    }
+    th, td {
+      border: 1px solid #30363d !important;
+      padding: 10px 14px !important;
+    }
+    th {
+      background-color: #21262d !important;
+      color: #58a6ff !important;
+    }
+    tr:nth-child(even) { background-color: #161b22 !important; }
+    tr:nth-child(odd) { background-color: #0d1117 !important; }
+    code {
+      background-color: rgba(110,118,129,0.4) !important;
+      color: #79c0ff !important;
+      padding: 2px 6px !important;
+      border-radius: 4px !important;
+      font-family: 'Consolas', 'Courier New', monospace !important;
+    }
+    pre code {
+      background-color: transparent !important;
+      padding: 0 !important;
+      color: #e6edf3 !important;
+    }
+    .qa-box {
+      background: #0d1117;
+      border-left: 4px solid #38bdf8;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      border-radius: 0 8px 8px 0;
+    }
+    .qa-question {
+      font-weight: bold;
+      color: #38bdf8;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    .badge-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #58a6ff;
+    }
+    .badge-green { color: #3fb950; border-color: rgba(63,185,80,0.4); }
+    .badge-purple { color: #bc8cff; border-color: rgba(188,140,255,0.4); }
+    .banner {
+      background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(139,92,246,0.1));
+      border: 1px solid rgba(6,182,212,0.3);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <article class="markdown-body">
+    <div class="banner">
+      <div class="badge-bar">
+        <span class="badge"><i class="fa-solid fa-network-wired"></i> Red WAN Serial V.35</span>
+        <span class="badge badge-green"><i class="fa-solid fa-lock"></i> Cifrado César, Vigenère y Vernam</span>
+        <span class="badge badge-purple"><i class="fa-solid fa-microchip"></i> Cisco 1941 / Catalyst 2960</span>
+      </div>
+      <h1 style="margin-top: 0; font-size: 26px;">Documento Técnico y Teórico: Red WAN y Sistema Criptográfico</h1>
+      <p style="margin: 0; color: #8b949e; font-size: 14px;">
+        <strong>Materia:</strong> Administración y Seguridad de Redes &bull; <strong>Modalidad:</strong> Equipos Físicos Reales &bull; 2026
+      </p>
+    </div>
+
+    <h2>1. Resumen Ejecutivo del Proyecto</h2>
+    <p>Este proyecto integra dos componentes fundamentales de las tecnologías de la información:</p>
+    <ul>
+      <li><strong>Infraestructura de Redes:</strong> Segmentación IP en tres subredes (LAN 1, WAN Serial y LAN 2), conmutación de tramas Ethernet en Capa 2 y enrutamiento de paquetes en Capa 3 mediante routers Cisco conectados espalda con espalda a través de un cable serial físico V.35.</li>
+      <li><strong>Seguridad de la Información:</strong> Implementación de criptografía simétrica clásica en el software de aplicación para garantizar que los datos confidenciales solo viajen cifrados por los cables y switches, impidiendo el espionaje de red (sniffing).</li>
+    </ul>
+
+    <hr>
+
+    <h2>2. Topología de Red y Arquitectura Física</h2>
+    <img src="topologia_red_detallada.jpg" alt="Topología de Red Detallada" style="width: 100%; border-radius: 8px; border: 1px solid #30363d; margin: 15px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+    <pre><code>┌─────────────────┐                                                                                             ┌─────────────────┐
+│    LAPTOP 1     │                                                                                             │    LAPTOP 2     │
+│   (PC 1 Emisor) │                                                                                             │ (PC 2 Receptor) │
+│  192.168.10.10  │                                                                                             │ 192.168.20.10   │
+└────────┬────────┘                                                                                             └────────▲────────┘
+         │ Cable RJ-45 (Directo)                                                                                         │ Cable RJ-45 (Directo)
+         ▼                                                                                                               │
+┌─────────────────┐                                                                                             ┌────────┴────────┐
+│    SWITCH 1     │                                                                                             │    SWITCH 2     │
+│ (Catalyst 2960) │                                                                                             │ (Catalyst 2960) │
+└────────┬────────┘                                                                                             └────────▲────────┘
+         │ Cable RJ-45 (Uplink)                                                                                          │ Cable RJ-45 (Downlink)
+         ▼                                                                                                               │
+┌─────────────────┐                       CABLE SERIAL V.35 / SMART SERIAL                       ┌────────┴────────┐
+│    ROUTER 1     │                       ════════════════════════════════                       │    ROUTER 2     │
+│  (Cisco 1941)   │═════════════════════► [ EXTREMO DCE ]       [ EXTREMO DTE ] ════════════════►│  (Cisco 1941)   │
+│ LAN:192.168.10.1│   Puerto Serial 0/0/0   (Clock Rate: 64000)   Puerto Serial 0/0/0            │ LAN:192.168.20.1│
+│ WAN: 10.0.0.1   │                                                                              │ WAN: 10.0.0.2   │
+└─────────────────┘                       ◄─────── LA NUBE WAN DE TRANSPORTE ───────►            └─────────────────┘</code></pre>
+
+    <h3>Tabla de Direccionamiento IP y Segmentación (VLSM):</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Segmento</th>
+          <th>Red</th>
+          <th>Máscara</th>
+          <th>Rango Útil</th>
+          <th>Propósito</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>LAN 1</strong></td>
+          <td><code>192.168.10.0</code></td>
+          <td><code>255.255.255.0 (/24)</code></td>
+          <td><code>192.168.10.1 - .254</code></td>
+          <td>Red local del Emisor (Laptop 1, Switch 1, Router 1)</td>
+        </tr>
+        <tr>
+          <td><strong>WAN Serial (Nube)</strong></td>
+          <td><code>10.0.0.0</code></td>
+          <td><code>255.255.255.252 (/30)</code></td>
+          <td><code>10.0.0.1 - 10.0.0.2</code></td>
+          <td>Enlace punto a punto serial entre Router 1 y Router 2</td>
+        </tr>
+        <tr>
+          <td><strong>LAN 2</strong></td>
+          <td><code>192.168.20.0</code></td>
+          <td><code>255.255.255.0 (/24)</code></td>
+          <td><code>192.168.20.1 - .254</code></td>
+          <td>Red local del Receptor (Laptop 2, Switch 2, Router 2)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr>
+
+    <h2>3. Fundamento de Redes: ¿Cómo Funciona la Conexión?</h2>
+
+    <h3>3.1 ¿Por qué el Cable Serial representa la "Nube"?</h3>
+    <p>En el mundo real, una empresa que quiere conectar dos sucursales contrata a un proveedor de telecomunicaciones (Carrier/ISP) que entrega una conexión síncrona. En un laboratorio físico de universidad, esa infraestructura de telecomunicaciones se emula conectando los dos routers espalda con espalda (<em>back-to-back</em>) con un <strong>cable serial V.35 o Smart Serial</strong>.</p>
+    <ul>
+      <li><strong>DCE (Data Communications Equipment):</strong> Simula el equipo de la compañía telefónica (proveedor). Proporciona la señal física de reloj a través del comando <code>clock rate 64000</code>.</li>
+      <li><strong>DTE (Data Terminal Equipment):</strong> Simula el equipo del cliente. Se sincroniza automáticamente con el ritmo de bits marcado por el DCE.</li>
+    </ul>
+
+    <h3>3.2 ¿Por qué se usa la máscara /30 (255.255.255.252) en la WAN?</h3>
+    <p>Una máscara <code>/30</code> reserva 2 bits para identificador de host, lo que otorga exactamente \(2^2 - 2 = 2\) direcciones IP utilizables. En un enlace serial punto a punto únicamente existen dos equipos (Router 1 y Router 2). Usar <code>/30</code> evita desperdiciar direcciones IP.</p>
+
+    <h3>3.3 Enrutamiento en Capa 3 mediante Rutas Estáticas</h3>
+    <p>Cuando Laptop 1 (<code>192.168.10.10</code>) envía datos hacia Laptop 2 (<code>192.168.20.10</code>), se percata de que la dirección de destino no está en su red local. Por ello, se la envía a su <strong>Default Gateway (192.168.10.1)</strong>.</p>
+    <p>Router 1 consulta su tabla de enrutamiento y aplica la ruta estática configurada:</p>
+    <pre><code>ip route 192.168.20.0 255.255.255.0 10.0.0.2</code></pre>
+    <p>Esta instrucción le dice a Router 1 que cualquier paquete con destino a la LAN 2 debe ser despachado a través del cable serial hacia el siguiente salto: <strong>10.0.0.2 (Router 2)</strong>.</p>
+
+    <hr>
+
+    <h2>4. Fundamento Criptográfico: Los Tres Algoritmos de Cifrado</h2>
+
+    <h3>4.1 Cifrado César (Sustitución Monoalfabética)</h3>
+    <p>Desplaza cada letra del alfabeto un número fijo de posiciones \(k\):</p>
+    <p>$$\mathbf{C_i = (P_i + k) \pmod{26}} \qquad \text{Descifrado:} \quad \mathbf{P_i = (C_i - k) \pmod{26}}$$</p>
+    <p><strong>Vulnerabilidad:</strong> Solo tiene 25 claves posibles en el abecedario. Se rompe en segundos por ataque de fuerza bruta o por análisis estadístico de frecuencias.</p>
+
+    <h3>4.2 Cifrado Vigenère (Sustitución Polialfabética)</h3>
+    <p>Utiliza una palabra clave que se repite a lo largo del mensaje. Cada letra de la clave produce un desplazamiento independiente:</p>
+    <p>$$\mathbf{C_i = (P_i + K_{i \pmod m}) \pmod{26}} \qquad \text{Descifrado:} \quad \mathbf{P_i = (C_i - K_{i \pmod m} + 26) \pmod{26}}$$</p>
+    <p><strong>Ventaja:</strong> Una misma letra del texto plano se cifra como letras distintas a lo largo del texto, neutralizando los ataques de frecuencias simples.</p>
+
+    <h3>4.3 Cifrado Vernam (One-Time Pad / Flujo XOR)</h3>
+    <p>Aplica la operación lógica binaria <strong>XOR (Or Exclusivo, \(\oplus\))</strong> entre los bits del texto plano y los de una clave aleatoria de igual longitud:</p>
+    <p>$$\mathbf{C_i = P_i \oplus K_i} \qquad \text{Descifrado:} \quad \mathbf{P_i = C_i \oplus K_i}$$</p>
+    <p><strong>Secreto Perfecto:</strong> Claude Shannon demostró formalmente que si la clave es 100% aleatoria, igual de larga que el mensaje y se usa una sola vez, es matemáticamente irrompible.</p>
+    <p><strong>Uso de Hexadecimal:</strong> Dado que la operación binaria XOR puede producir bytes de control ASCII no imprimibles (como <code>0x00</code> o <code>0x07</code>), el resultado se convierte a cadenas hexadecimales para que viaje seguro a través de HTTP y se pueda exportar a <code>.txt</code> sin corromperse.</p>
+
+    <hr>
+
+    <h2>5. Preguntas Clave del Profesor y Respuestas de Examen</h2>
+
+    <div class="qa-box">
+      <div class="qa-question">P1: ¿Por qué un router lleva <code>clock rate</code> y el otro no?</div>
+      <p style="margin: 0;">En una conexión serial síncrona se requiere una señal de pulsos de reloj para que el receptor sepa en qué microsegundo leer cada bit. En el cable serial físico, el extremo <strong>DCE</strong> representa la compañía proveedora de la nube y genera el reloj mediante <code>clock rate 64000</code>; el extremo <strong>DTE</strong> es el cliente y simplemente se sincroniza.</p>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-question">P2: ¿Por qué se configuraron rutas estáticas en lugar de protocolos dinámicos (OSPF o RIP)?</div>
+      <p style="margin: 0;">Porque en una topología lineal punto a punto con solo dos routers y tres subredes, las rutas estáticas tienen una distancia administrativa menor (AD = 1, más confiable que 110 de OSPF), consumen cero ancho de banda en la WAN (no envían paquetes de saludo) y no consumen CPU de los routers calculando algoritmos de Dijkstra.</p>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-question">P3: ¿Por qué el texto cifrado de Vernam se muestra en código hexadecimal?</div>
+      <p style="margin: 0;">Porque al aplicar la compuerta XOR bit a bit, se generan bytes binarios arbitrarios que pueden coincidir con caracteres no imprimibles o de control de la tabla ASCII. Si se enviaran como texto crudo, romperían las cabeceras HTTP o la codificación UTF-8. El formato hexadecimal garantiza integridad absoluta durante el transporte.</p>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-question">P4: ¿Cuál es el papel del Default Gateway en las Laptops?</div>
+      <p style="margin: 0;">Permite a los equipos de cómputo enviar tráfico fuera de su propia subred. Al comparar la IP de destino con su máscara local, si la IP pertenece a otra red, el sistema operativo remite la trama a la dirección MAC del Default Gateway (la interfaz <code>Gig0/0</code> del Router local) para que sea enrutada.</p>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-question">P5: ¿Qué diferencia hay entre la conmutación del Switch y el enrutamiento del Router?</div>
+      <p style="margin: 0;">El <strong>Switch</strong> opera en Capa 2 del modelo OSI con direcciones MAC y conecta equipos dentro del mismo segmento local. El <strong>Router</strong> opera en Capa 3 con direcciones IP y es el dispositivo encargado de unir diferentes subredes lógicas y decidir por cuál puerto físico de salida reenviar cada paquete.</p>
+    </div>
+  </article>
+
+</body>
+</html>

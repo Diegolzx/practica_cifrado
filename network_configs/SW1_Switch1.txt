@@ -1,0 +1,29 @@
+! ==============================================================================
+! CONFIGURACION DE SWITCH 1 (SW1 - LAN 1)
+! Modelo recomendado en Packet Tracer: Cisco Catalyst 2960
+! ==============================================================================
+
+enable
+configure terminal
+hostname SW1
+
+! Configuracion IP para administracion remota (Opcional pero recomendada)
+interface vlan 1
+ description Interfaz de Gestion SW1
+ ip address 192.168.10.2 255.255.255.0
+ no shutdown
+ exit
+
+! Gateway predeterminado apuntando a R1
+ip default-gateway 192.168.10.1
+
+! Los puertos FastEthernet 0/1 al 0/24 vienen por defecto en modo Access Vlan 1
+! Puedes asegurarlo con:
+interface range FastEthernet0/1 - 24
+ switchport mode access
+ switchport access vlan 1
+ no shutdown
+ exit
+
+end
+write memory

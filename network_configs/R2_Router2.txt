@@ -1,0 +1,36 @@
+! ==============================================================================
+! CONFIGURACION DE ROUTER 2 (R2 - FISICO CON CABLE SERIAL DTE)
+! ==============================================================================
+
+enable
+configure terminal
+hostname R2
+no ip domain-lookup
+
+! 1. Interfaz hacia Switch 2 (LAN 2 - Red de Laptop 2)
+interface GigabitEthernet0/0
+ description Conexion LAN 2 hacia Switch 2
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+ exit
+
+! 2. Interfaz WAN hacia Router 1 (La Nube mediante Cable Serial)
+! IMPORTANTE: Conectar aqui el extremo del cable serial marcado como DTE
+interface Serial0/0/0
+ description Enlace WAN Serial hacia R1 (NUBE)
+ ip address 10.0.0.2 255.255.255.252
+ no shutdown
+ exit
+
+! 3. Ruta Estatica para enviar trafico a la LAN 1 (Laptop 1)
+! Sintaxis: ip route [red_destino] [mascara] [ip_siguiente_salto]
+ip route 192.168.10.0 255.255.255.0 10.0.0.1
+
+! Guardar en memoria
+end
+write memory
+
+! Comandos de verificacion en R2:
+! show ip interface brief
+! show interfaces serial0/0/0
+! show ip route

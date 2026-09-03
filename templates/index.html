@@ -1,0 +1,226 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<!-- DIAGRAMA VISUAL DE LA TOPOLOGÍA (IDÉNTICO AL PIZARRÓN) -->
+<div class="topology-diagram-card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div>
+      <h2 style="font-size: 1.3rem; font-weight: 700;">Topología de Red del Proyecto</h2>
+      <p style="font-size: 0.88rem; color: var(--text-secondary);">
+        Interconexión de 2 PCs, 2 Switches, 2 Routers y Nube WAN (Frame-Relay)
+      </p>
+    </div>
+    <span class="badge badge-emerald"><span class="status-dot"></span> Red Operativa &bull; Enlace Serial</span>
+  </div>
+
+  <div style="text-align: center; margin: 1rem 0 1.5rem 0;">
+    <img src="{{ url_for('static', filename='topologia_red_detallada.jpg') }}" alt="Topología de Red Detallada" style="max-width: 100%; border-radius: 12px; border: 1px solid rgba(56,189,248,0.3); box-shadow: 0 6px 24px rgba(0,0,0,0.5);">
+  </div>
+
+  <div class="diagram-track">
+    <!-- PC 1 -->
+    <div class="diagram-node active-node">
+      <div class="node-icon-box" title="PC 1 / Laptop 1 (Emisor)">
+        <i class="fa-solid fa-laptop text-cyan"></i>
+      </div>
+      <div class="node-title">PC 1 (Emisor)</div>
+      <div class="node-ip">192.168.10.10</div>
+      <span class="badge badge-cyan" style="margin-top: 4px;">.txt &amp; K</span>
+    </div>
+
+    <div class="diagram-connector"></div>
+
+    <!-- SWITCH 1 -->
+    <div class="diagram-node">
+      <div class="node-icon-box" title="Switch 1 (Cisco 2960)">
+        <i class="fa-solid fa-arrows-split-up-and-left" style="color: #60a5fa;"></i>
+      </div>
+      <div class="node-title">Switch 1</div>
+      <div class="node-ip">192.168.10.2</div>
+      <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">VLAN 1</span>
+    </div>
+
+    <div class="diagram-connector"></div>
+
+    <!-- ROUTER 1 -->
+    <div class="diagram-node">
+      <div class="node-icon-box" title="Router 1 (Cisco 1941)">
+        <i class="fa-solid fa-circle-nodes" style="color: #38bdf8;"></i>
+      </div>
+      <div class="node-title">Router 1</div>
+      <div class="node-ip">192.168.10.1</div>
+      <span class="badge" style="background: rgba(56,189,248,0.1); color: #38bdf8; margin-top: 4px;">Se0/0/0: 10.0.0.1</span>
+    </div>
+
+    <div class="diagram-connector wan-link"></div>
+
+    <!-- NUBE WAN -->
+    <div class="diagram-node cloud-node">
+      <div class="node-icon-box" title="Nube WAN (Frame Relay Cloud-PT)">
+        <i class="fa-solid fa-cloud" style="color: #c084fc;"></i>
+      </div>
+      <div class="node-title">Nube WAN</div>
+      <div class="node-ip">DLCI 102 &harr; 201</div>
+      <span class="badge badge-purple" style="margin-top: 4px;">Frame-Relay</span>
+    </div>
+
+    <div class="diagram-connector wan-link"></div>
+
+    <!-- ROUTER 2 -->
+    <div class="diagram-node">
+      <div class="node-icon-box" title="Router 2 (Cisco 1941)">
+        <i class="fa-solid fa-circle-nodes" style="color: #38bdf8;"></i>
+      </div>
+      <div class="node-title">Router 2</div>
+      <div class="node-ip">192.168.20.1</div>
+      <span class="badge" style="background: rgba(56,189,248,0.1); color: #38bdf8; margin-top: 4px;">Se0/0/0: 10.0.0.2</span>
+    </div>
+
+    <div class="diagram-connector"></div>
+
+    <!-- SWITCH 2 -->
+    <div class="diagram-node">
+      <div class="node-icon-box" title="Switch 2 (Cisco 2960)">
+        <i class="fa-solid fa-arrows-split-up-and-left" style="color: #60a5fa;"></i>
+      </div>
+      <div class="node-title">Switch 2</div>
+      <div class="node-ip">192.168.20.2</div>
+      <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">VLAN 1</span>
+    </div>
+
+    <div class="diagram-connector"></div>
+
+    <!-- PC 2 -->
+    <div class="diagram-node active-node">
+      <div class="node-icon-box" title="PC 2 / Laptop 2 (Receptor)">
+        <i class="fa-solid fa-server text-emerald"></i>
+      </div>
+      <div class="node-title">PC 2 (Receptor)</div>
+      <div class="node-ip">192.168.20.10</div>
+      <span class="badge badge-emerald" style="margin-top: 4px;"><i class="fa-solid fa-check"></i> Descifrar .txt</span>
+    </div>
+  </div>
+</div>
+
+<!-- ACCESO RÁPIDO A LOS MÓDULOS -->
+<div class="grid-2" style="margin-bottom: 2rem;">
+  <!-- TARJETA PC 1 -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-paper-plane" style="color: var(--accent-cyan);"></i>
+        Laptop 1 &bull; Modo Emisor (PC 1)
+      </h3>
+      <span class="badge badge-cyan">LAN 1 &bull; 192.168.10.10</span>
+    </div>
+    <p style="color: var(--text-secondary); font-size: 0.92rem; margin-bottom: 1.25rem;">
+      Ejecutar en la Laptop 1 conectada a Switch 1. Permite escribir o cargar un archivo <code>.txt</code>, aplicar cifrado
+      (<strong>César</strong>, <strong>Vigenère</strong> o <strong>Vernam</strong>) con clave <code>K</code>, y transmitir el paquete por el cable serial hacia Laptop 2.
+    </p>
+    <a href="{{ url_for('sender_view') }}" class="btn btn-primary btn-full">
+      <i class="fa-solid fa-arrow-right"></i> Abrir Terminal Emisor
+    </a>
+  </div>
+
+  <!-- TARJETA PC 2 -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-inbox" style="color: var(--accent-emerald);"></i>
+        Laptop 2 &bull; Modo Receptor (PC 2)
+      </h3>
+      <span class="badge badge-emerald">LAN 2 &bull; 192.168.20.10</span>
+    </div>
+    <p style="color: var(--text-secondary); font-size: 0.92rem; margin-bottom: 1.25rem;">
+      Ejecutar en la Laptop 2 conectada a Switch 2. Escucha paquetes entrantes en el puerto 5000 a través del cable serial, visualiza el mensaje cifrado en tránsito, permite ingresar la clave para descifrar y <strong>exportar a <code>.txt</code></strong>.
+    </p>
+    <a href="{{ url_for('receiver_view') }}" class="btn btn-emerald btn-full">
+      <i class="fa-solid fa-arrow-right"></i> Abrir Terminal Receptor
+    </a>
+  </div>
+</div>
+
+<!-- INFORMACIÓN DE RED Y COMANDOS -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fa-solid fa-terminal" style="color: var(--accent-cyan);"></i>
+      Tabla Rápida de Direccionamiento IP y Puertos
+    </h3>
+    <span class="badge badge-cyan">Documentación Técnica</span>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left;">
+      <thead>
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.15); color: var(--text-secondary);">
+          <th style="padding: 10px;">Dispositivo</th>
+          <th style="padding: 10px;">Interfaz</th>
+          <th style="padding: 10px;">Dirección IP</th>
+          <th style="padding: 10px;">Máscara</th>
+          <th style="padding: 10px;">Gateway</th>
+          <th style="padding: 10px;">Conexión en la Topología</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <td style="padding: 10px; font-weight: 600;">PC 1 (Laptop 1)</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">Fa0 / Eth</td>
+          <td style="padding: 10px; font-family: var(--font-mono); color: var(--accent-cyan);">192.168.10.10</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">255.255.255.0</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">192.168.10.1</td>
+          <td style="padding: 10px;">Conecta a Switch 1 (Fa0/1)</td>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <td style="padding: 10px; font-weight: 600;">Switch 1</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">VLAN 1</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">192.168.10.2</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">255.255.255.0</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">192.168.10.1</td>
+          <td style="padding: 10px;">Conecta a Router 1 (Gig0/0)</td>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <td style="padding: 10px; font-weight: 600;">Router 1 (R1)</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">Gig0/0 &bull; Se0/0/0</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">192.168.10.1 &bull; 10.0.0.1</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">/24 &bull; /30</td>
+          <td style="padding: 10px;">N/A</td>
+          <td style="padding: 10px;">Se0/0/0 conecta a Nube WAN (DLCI 102)</td>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <td style="padding: 10px; font-weight: 600;">Nube WAN (Cloud-PT)</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">Serial 0 &bull; Serial 1</td>
+          <td style="padding: 10px;">Frame-Relay</td>
+          <td style="padding: 10px;">N/A</td>
+          <td style="padding: 10px;">N/A</td>
+          <td style="padding: 10px;">Mapeo: Serial0 (102) &harr; Serial1 (201)</td>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <td style="padding: 10px; font-weight: 600;">Router 2 (R2)</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">Se0/0/0 &bull; Gig0/0</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">10.0.0.2 &bull; 192.168.20.1</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">/30 &bull; /24</td>
+          <td style="padding: 10px;">N/A</td>
+          <td style="padding: 10px;">Se0/0/0 conecta a Nube WAN (DLCI 201)</td>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <td style="padding: 10px; font-weight: 600;">Switch 2</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">VLAN 1</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">192.168.20.2</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">255.255.255.0</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">192.168.20.1</td>
+          <td style="padding: 10px;">Conecta a Router 2 (Gig0/0)</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; font-weight: 600;">PC 2 (Laptop 2)</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">Fa0 / Eth</td>
+          <td style="padding: 10px; font-family: var(--font-mono); color: var(--accent-emerald);">192.168.20.10</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">255.255.255.0</td>
+          <td style="padding: 10px; font-family: var(--font-mono);">192.168.20.1</td>
+          <td style="padding: 10px;">Conecta a Switch 2 (Fa0/1) &bull; Puerto Web: 5000</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

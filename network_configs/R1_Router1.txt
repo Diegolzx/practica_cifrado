@@ -1,0 +1,37 @@
+! ==============================================================================
+! CONFIGURACION DE ROUTER 1 (R1 - FISICO CON CABLE SERIAL DCE)
+! ==============================================================================
+
+enable
+configure terminal
+hostname R1
+no ip domain-lookup
+
+! 1. Interfaz hacia Switch 1 (LAN 1 - Red de Laptop 1)
+interface GigabitEthernet0/0
+ description Conexion LAN 1 hacia Switch 1
+ ip address 192.168.10.1 255.255.255.0
+ no shutdown
+ exit
+
+! 2. Interfaz WAN hacia Router 2 (La Nube mediante Cable Serial)
+! IMPORTANTE: Conectar aqui el extremo del cable serial marcado como DCE
+interface Serial0/0/0
+ description Enlace WAN Serial hacia R2 (NUBE)
+ ip address 10.0.0.1 255.255.255.252
+ clock rate 64000
+ no shutdown
+ exit
+
+! 3. Ruta Estatica para enviar trafico a la LAN 2 (Laptop 2)
+! Sintaxis: ip route [red_destino] [mascara] [ip_siguiente_salto]
+ip route 192.168.20.0 255.255.255.0 10.0.0.2
+
+! Guardar en memoria
+end
+write memory
+
+! Comandos de verificacion en R1:
+! show ip interface brief
+! show interfaces serial0/0/0
+! show ip route

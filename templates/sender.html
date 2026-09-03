@@ -1,0 +1,357 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+  <div>
+    <h1 style="font-size: 1.6rem; font-weight: 700;">
+      <i class="fa-solid fa-laptop text-cyan"></i> PC 1 &bull; Terminal Emisor
+    </h1>
+    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+      IP Origen: <code style="color: var(--accent-cyan);">192.168.10.10</code> &bull; Red: LAN 1
+    </p>
+  </div>
+  <span class="badge badge-cyan"><i class="fa-solid fa-circle-dot"></i> Listo para transmitir</span>
+</div>
+
+<div class="grid-2">
+  <!-- COLUMNA IZQUIERDA: MENSAJE, ARCHIVO Y CLAVE K -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-file-pen" style="color: var(--accent-cyan);"></i>
+        1. Mensaje de Origen y Clave [K]
+      </h3>
+      <span class="badge" id="char-counter" style="background: rgba(255,255,255,0.06); color: var(--text-secondary);">0 caracteres</span>
+    </div>
+
+    <!-- ZONA DE CARGA DE ARCHIVO .TXT (COMO EN EL PIZARRÓN) -->
+    <div class="file-upload-zone" id="file-drop-zone" onclick="document.getElementById('txt-file-input').click();">
+      <i class="fa-solid fa-file-lines" style="font-size: 1.8rem; color: var(--accent-cyan); margin-bottom: 6px;"></i>
+      <p style="font-size: 0.88rem; font-weight: 600;">Cargar archivo .txt (Opcional)</p>
+      <p style="font-size: 0.75rem; color: var(--text-muted);">Arrastra tu archivo aquí o haz clic para seleccionarlo</p>
+      <input type="file" id="txt-file-input" accept=".txt" onchange="handleFileSelect(event)">
+    </div>
+
+    <!-- ÁREA DE TEXTO -->
+    <div class="form-group">
+      <label class="form-label" for="plaintext-input">
+        <span>Texto plano a cifrar:</span>
+        <button class="btn btn-outline btn-sm" onclick="setExampleText()" type="button" style="padding: 2px 8px; font-size: 0.75rem;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Ejemplo
+        </button>
+      </label>
+      <textarea id="plaintext-input" class="form-textarea" placeholder="Escribe aquí el mensaje que deseas enviar a PC 2..." oninput="updateCharCount()"></textarea>
+    </div>
+
+    <!-- SELECTOR DE ALGORITMO -->
+    <div class="form-group">
+      <label class="form-label">Seleccionar Algoritmo de Cifrado:</label>
+      <div class="cipher-selector">
+        <button type="button" class="cipher-pill active" id="btn-algo-caesar" onclick="selectAlgorithm('caesar')">
+          <i class="fa-solid fa-calculator"></i> César
+        </button>
+        <button type="button" class="cipher-pill" id="btn-algo-vigenere" onclick="selectAlgorithm('vigenere')">
+          <i class="fa-solid fa-font"></i> Vigenère
+        </button>
+        <button type="button" class="cipher-pill" id="btn-algo-vernam" onclick="selectAlgorithm('vernam')">
+          <i class="fa-solid fa-key"></i> Vernam (OTP)
+        </button>
+      </div>
+    </div>
+
+    <!-- ENTRADA DE LA CLAVE K -->
+    <div class="form-group">
+      <div class="form-label">
+        <span id="key-label-text">Clave de Cifrado [K]:</span>
+        <button class="btn btn-outline btn-sm" id="btn-generate-key" onclick="generateKey()" type="button" style="padding: 2px 8px; font-size: 0.75rem;">
+          <i class="fa-solid fa-arrows-rotate"></i> Generar clave
+        </button>
+      </div>
+      <input type="text" id="key-input" class="form-input code-font" placeholder="Ingresa un número (ej. 3)" value="3">
+      <p id="key-hint" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+        Para César: Introduce un número entero (desplazamiento k).
+      </p>
+    </div>
+
+    <!-- BOTÓN EJECUTAR CIFRADO (COMO EN EL PIZARRÓN) -->
+    <button type="button" class="btn btn-primary btn-full" onclick="executeEncrypt()" style="font-size: 1rem;">
+      <i class="fa-solid fa-gears"></i> Ejecutar Cifrado
+    </button>
+  </div>
+
+  <!-- COLUMNA DERECHA: RESULTADO CIFRADO Y TRANSMISIÓN A PC 2 -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-satellite-dish" style="color: var(--accent-emerald);"></i>
+        2. Cifrado y Transmisión WAN a PC 2
+      </h3>
+      <span class="badge badge-purple" id="status-badge">Esperando cifrado</span>
+    </div>
+
+    <!-- DESTINO DE RED (IP DE PC 2) -->
+    <div class="form-group">
+      <div class="form-label" for="target-url">
+        <span>Destino en la Red (PC 2 / Receptor):</span>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="setTargetUrl('local')" style="padding: 2px 8px; font-size: 0.72rem; color: var(--accent-cyan);">
+            <i class="fa-solid fa-laptop"></i> Prueba Local (Esta PC)
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="setTargetUrl('remote')" style="padding: 2px 8px; font-size: 0.72rem; color: var(--accent-emerald);">
+            <i class="fa-solid fa-network-wired"></i> Red Física (192.168.20.10)
+          </button>
+        </div>
+      </div>
+      <input type="text" id="target-url" class="form-input code-font" value="http://127.0.0.1:5000/api/receive">
+      <p id="target-hint" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+        <i class="fa-solid fa-info-circle text-cyan"></i> Modo actual: <strong>Prueba Local en esta computadora</strong>. Los paquetes llegarán directamente a tu pestaña de PC 2.
+      </p>
+    </div>
+
+    <!-- COMPARTIR CLAVE -->
+    <div class="form-group" style="background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.06);">
+      <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer;">
+        <input type="checkbox" id="share-key-toggle" checked style="accent-color: var(--accent-cyan); width: 16px; height: 16px;">
+        <span>Adjuntar clave [K] en el paquete para descifrado automático en PC 2</span>
+      </label>
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; margin-left: 24px;">
+        (Desmárcalo si quieres que el receptor deba ingresar la clave manualmente en PC 2).
+      </p>
+    </div>
+
+    <!-- VISUALIZADOR DEL MENSAJE CIFRADO -->
+    <div class="form-group">
+      <label class="form-label">
+        <span>Mensaje Cifrado en Tránsito (Payload):</span>
+        <span id="cipher-info-badge" class="badge badge-cyan" style="display: none;">César</span>
+      </label>
+      <div id="ciphertext-display" class="payload-box empty">
+        [El texto cifrado se mostrará aquí una vez presiones "Ejecutar Cifrado"]
+      </div>
+    </div>
+
+    <!-- BOTÓN TRANSMITIR POR LA RED -->
+    <button type="button" id="btn-transmit" class="btn btn-emerald btn-full" onclick="transmitPacket()" disabled style="font-size: 1rem; margin-bottom: 1.25rem;">
+      <i class="fa-solid fa-paper-plane"></i> Transmitir a PC 2 (Topología WAN)
+    </button>
+
+    <!-- LOG DE LA TRANSMISIÓN DE RED -->
+    <div>
+      <label class="form-label">Registro de Conexión y Tránsito:</label>
+      <div id="network-log" class="payload-box" style="height: 120px; font-size: 0.82rem; color: #a5b4fc;">
+        [*] Terminal de transmisión listo. Esperando acción...
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentAlgorithm = 'caesar';
+let lastCiphertext = '';
+let lastKey = '';
+let attachedFileName = 'mensaje.txt';
+
+function selectAlgorithm(algo) {
+  currentAlgorithm = algo;
+  document.querySelectorAll('.cipher-pill').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(`btn-algo-${algo}`).classList.add('active');
+
+  const keyInput = document.getElementById('key-input');
+  const keyHint = document.getElementById('key-hint');
+  const keyLabel = document.getElementById('key-label-text');
+
+  if (algo === 'caesar') {
+    keyLabel.textContent = 'Clave de Desplazamiento [k]:';
+    keyInput.placeholder = 'Número entero (ej. 3)';
+    keyInput.value = '3';
+    keyHint.textContent = 'Para César: Introduce un número entero (desplazamiento k de 1 a 25).';
+  } else if (algo === 'vigenere') {
+    keyLabel.textContent = 'Palabra Clave [K]:';
+    keyInput.placeholder = 'Palabra o frase clave (ej. REDES)';
+    keyInput.value = 'REDES';
+    keyHint.textContent = 'Para Vigenère: Introduce letras del abecedario para la sustitución polialfabética.';
+  } else if (algo === 'vernam') {
+    keyLabel.textContent = 'Clave One-Time Pad [K]:';
+    keyInput.placeholder = 'Clave de longitud igual o mayor al mensaje';
+    keyHint.textContent = 'Para Vernam (OTP): La clave debe tener longitud >= mensaje. Haz clic en "Generar clave".';
+    generateKey();
+  }
+}
+
+function setTargetUrl(mode) {
+  const input = document.getElementById('target-url');
+  const hint = document.getElementById('target-hint');
+  if (mode === 'local') {
+    input.value = 'http://127.0.0.1:5000/api/receive';
+    hint.innerHTML = '<i class="fa-solid fa-laptop text-cyan"></i> Modo actual: <strong>Prueba Local en esta computadora</strong>. Los paquetes llegarán directamente a tu pestaña de PC 2.';
+    logMessage('[*] Destino cambiado a Local (127.0.0.1:5000)');
+  } else {
+    input.value = 'http://192.168.20.10:5000/api/receive';
+    hint.innerHTML = '<i class="fa-solid fa-network-wired text-emerald"></i> Modo actual: <strong>Red Física de Laboratorio (192.168.20.10)</strong> a través de los routers y la nube.';
+    logMessage('[*] Destino cambiado a Red Física (192.168.20.10:5000)');
+  }
+}
+
+function updateCharCount() {
+  const len = document.getElementById('plaintext-input').value.length;
+  document.getElementById('char-counter').textContent = `${len} caracteres`;
+}
+
+function setExampleText() {
+  document.getElementById('plaintext-input').value = "Proyecto de Redes: Mensaje confidencial transmitido a través de la Nube Frame-Relay hacia PC 2.";
+  updateCharCount();
+}
+
+function handleFileSelect(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  attachedFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('plaintext-input').value = e.target.result;
+    updateCharCount();
+    logMessage(`[OK] Archivo '${file.name}' cargado con éxito (${e.target.result.length} caracteres).`);
+  };
+  reader.readAsText(file);
+}
+
+// Drag and drop support
+const dropZone = document.getElementById('file-drop-zone');
+['dragenter', 'dragover'].forEach(eventName => {
+  dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--accent-cyan)'; }, false);
+});
+['dragleave', 'drop'].forEach(eventName => {
+  dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.style.borderColor = 'rgba(255,255,255,0.2)'; }, false);
+});
+dropZone.addEventListener('drop', (e) => {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  if (files.length > 0) {
+    document.getElementById('txt-file-input').files = files;
+    handleFileSelect({ target: { files: files } });
+  }
+});
+
+async function generateKey() {
+  const textLen = document.getElementById('plaintext-input').value.length || 16;
+  try {
+    const res = await fetch(`/api/generate-key?algorithm=${currentAlgorithm}&length=${textLen}`);
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('key-input').value = data.key;
+      logMessage(`[*] Clave generada para ${currentAlgorithm}: ${data.key}`);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function executeEncrypt() {
+  const plaintext = document.getElementById('plaintext-input').value;
+  const key = document.getElementById('key-input').value;
+
+  if (!plaintext.trim()) {
+    alert('Por favor, escribe un mensaje o carga un archivo .txt primero.');
+    return;
+  }
+
+  if (!key.trim()) {
+    alert('Por favor, ingresa una clave [K] para el cifrado.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/encrypt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plaintext: plaintext,
+        algorithm: currentAlgorithm,
+        key: key
+      })
+    });
+
+    const data = await res.json();
+    if (!data.success) {
+      alert('Error al cifrar: ' + data.error);
+      return;
+    }
+
+    lastCiphertext = data.ciphertext;
+    lastKey = data.key;
+
+    const display = document.getElementById('ciphertext-display');
+    display.textContent = lastCiphertext;
+    display.classList.remove('empty');
+
+    const badge = document.getElementById('cipher-info-badge');
+    badge.textContent = `${data.algorithm.toUpperCase()} (${data.length} chars)`;
+    badge.style.display = 'inline-block';
+
+    document.getElementById('status-badge').textContent = 'Listo para transmitir';
+    document.getElementById('status-badge').className = 'badge badge-emerald';
+
+    document.getElementById('btn-transmit').disabled = false;
+    logMessage(`[OK] Mensaje cifrado con éxito utilizando ${data.algorithm.toUpperCase()}. Clave: ${lastKey}`);
+  } catch (err) {
+    alert('Error en la llamada de cifrado: ' + err);
+  }
+}
+
+async function transmitPacket() {
+  if (!lastCiphertext) {
+    alert('Primero ejecuta el cifrado del mensaje.');
+    return;
+  }
+
+  const targetUrl = document.getElementById('target-url').value.trim();
+  const shareKey = document.getElementById('share-key-toggle').checked;
+  const btn = document.getElementById('btn-transmit');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Transmitiendo por la red...';
+
+  logMessage(`[>] Enviando paquete cifrado hacia: ${targetUrl}`);
+  logMessage(`[>] Ruta: PC1 (192.168.10.10) -> R1 -> NUBE WAN -> R2 -> PC2...`);
+
+  try {
+    const res = await fetch('/api/send-packet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        target_url: targetUrl,
+        algorithm: currentAlgorithm,
+        ciphertext: lastCiphertext,
+        key_shared: shareKey ? lastKey : '',
+        file_name: attachedFileName
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      logMessage(`[OK] Paquete recibido por PC 2 en ${data.latency_ms} ms! Código HTTP: 200 OK.`);
+      document.getElementById('status-badge').textContent = 'Transmitido exitosamente';
+      document.getElementById('status-badge').className = 'badge badge-emerald';
+    } else {
+      logMessage(`[ERROR] Falló la transmisión: ${data.error}`);
+      document.getElementById('status-badge').textContent = 'Error de conexión';
+      document.getElementById('status-badge').className = 'badge badge-purple';
+    }
+  } catch (err) {
+    logMessage(`[ERROR] No se pudo contactar con la red: ${err}`);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Transmitir a PC 2 (Topología WAN)';
+  }
+}
+
+function logMessage(msg) {
+  const log = document.getElementById('network-log');
+  const time = new Date().toLocaleTimeString();
+  log.innerHTML += `\n[${time}] ${msg}`;
+  log.scrollTop = log.scrollHeight;
+}
+</script>
+{% endblock %}
