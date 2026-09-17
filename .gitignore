@@ -17,3 +17,7 @@ Desktop.ini
 
 # Archivos de entorno y logs temporales
 *.log
+
+# Editores e IDEs
+.vscode/
+.idea/
