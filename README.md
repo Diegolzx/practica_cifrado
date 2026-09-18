@@ -74,8 +74,8 @@ Conecta los cables según la tabla de la Sección 3. Asegúrate de conectar el e
 
 ### Paso 2: Configurar los Routers Cisco
 Conéctate por cable de consola a cada router y copia los comandos correspondientes:
-- Para **Router 1**: copia el contenido de [`network_configs/R1_Router1.txt`](file:///c:/Users/diego/OneDrive/Documentos/Practica_cifrado/network_configs/R1_Router1.txt)
-- Para **Router 2**: copia el contenido de [`network_configs/R2_Router2.txt`](file:///c:/Users/diego/OneDrive/Documentos/Practica_cifrado/network_configs/R2_Router2.txt)
+- Para **Router 1**: copia el contenido de [`network_configs/R1_Router1.txt`](network_configs/R1_Router1.txt)
+- Para **Router 2**: copia el contenido de [`network_configs/R2_Router2.txt`](network_configs/R2_Router2.txt)
 
 ### Paso 3: Configurar las Laptops en Windows
 En cada laptop presiona `Win + R`, escribe `ncpa.cpl` y configura la IP fija en el adaptador Ethernet:
@@ -135,3 +135,138 @@ Practica_cifrado/
 ├── requirements.txt               # Dependencias de Python (Flask, requests)
 └── README.md                      # Documentación oficial del proyecto
 ```
+
+---
+
+## 7. Explicación técnica del funcionamiento
+
+La práctica separa tres responsabilidades: la red entrega paquetes IP, Flask expone las operaciones HTTP y los módulos de `ciphers/` transforman el contenido. Los routers nunca cifran ni descifran: solo consultan sus rutas y reenvían el tráfico entre las dos LAN.
+
+### Flujo completo PC 1 -> PC 2
+
+1. En `/sender`, el usuario escribe un mensaje o carga un archivo `.txt`.
+2. El navegador envía `POST /api/encrypt` con `plaintext`, `algorithm` y `key`.
+3. `app.py` selecciona `caesar_encrypt`, `vigenere_encrypt` o `vernam_encrypt` y devuelve el texto cifrado.
+4. `POST /api/send-packet` construye un JSON con algoritmo, `ciphertext`, fecha, origen, nombre del archivo y, opcionalmente, `key_shared`.
+5. `requests.post()` publica el JSON en `http://192.168.20.10:5000/api/receive`. El sistema operativo usa el gateway `192.168.10.1`, R1 reenvía hacia `10.0.0.2` y R2 entrega el paquete a la LAN 2.
+6. PC 2 valida `ciphertext` y lo inserta en `INBOX`, una lista temporal en memoria.
+7. `/receiver` consulta `GET /api/inbox` cada 2,5 segundos, muestra los paquetes y permite seleccionar uno.
+8. El receptor introduce la clave y el navegador llama a `POST /api/decrypt`.
+9. El texto plano se muestra y `POST /api/download-txt` lo devuelve como archivo `text/plain` UTF-8.
+
+La bandeja se pierde al detener Flask y no es una base de datos. `POST /api/inbox/clear` la vacía manualmente.
+
+### API principal
+
+| Método y ruta | Función |
+|---|---|
+| `GET /`, `GET /sender`, `GET /receiver` | Vistas web |
+| `POST /api/encrypt` | Cifra texto plano |
+| `POST /api/decrypt` | Descifra texto cifrado |
+| `GET /api/generate-key` | Genera una clave según algoritmo y longitud |
+| `POST /api/send-packet` | Envía el paquete HTTP desde PC 1 |
+| `POST /api/receive` | Recibe y guarda el paquete en PC 2 |
+| `GET /api/inbox` | Devuelve la bandeja temporal |
+| `POST /api/inbox/clear` | Limpia la bandeja |
+| `POST /api/download-txt` | Genera la descarga del texto descifrado |
+
+El servidor se inicia con `host='0.0.0.0'` y puerto `5000`; esto permite conexiones desde la otra laptop. `localhost` solo sirve para acceder desde la misma computadora.
+
+---
+
+## 8. Topología y direccionamiento explicado
+
+PC 1 pertenece a `192.168.10.0/24` y usa R1 como gateway. PC 2 pertenece a `192.168.20.0/24` y usa R2 como gateway. Como ambas redes no son directamente adyacentes, cada router necesita una ruta estática hacia la LAN remota:
+
+- R1: `ip route 192.168.20.0 255.255.255.0 10.0.0.2`.
+- R2: `ip route 192.168.10.0 255.255.255.0 10.0.0.1`.
+
+El enlace `10.0.0.0/30` tiene cuatro direcciones: red `10.0.0.0`, R1 `10.0.0.1`, R2 `10.0.0.2` y broadcast `10.0.0.3`. En el montaje físico, R1 es DCE y suministra `clock rate 64000`; R2 es DTE. Los switches trabajan como conexión de capa 2 entre cada laptop y su router.
+
+La vista gráfica muestra una nube Frame Relay con DLCI `102 <-> 201`, útil como representación de una nube en simulador. Los scripts incluidos configuran una conexión serial física directa DCE/DTE, no una nube Frame Relay; ambas representaciones describen el transporte WAN, pero no deben configurarse como si fueran la misma variante.
+
+---
+
+## 9. Cifrados implementados
+
+### César
+
+Convierte la clave a entero y desplaza cada letra, conservando mayúsculas, minúsculas, espacios, números y signos:
+
+```text
+C_i = (P_i + k) mod 26
+P_i = (C_i - k) mod 26
+```
+
+Solo existen 26 desplazamientos, por lo que es un cifrado didáctico y no protege información real. Implementación: [ciphers/caesar.py](ciphers/caesar.py).
+
+### Vigenère
+
+Limpia la clave para conservar letras, la convierte a mayúsculas y la repite sobre las letras del mensaje. Los caracteres no alfabéticos no consumen posiciones de clave:
+
+```text
+C_i = (P_i + K_(i mod m)) mod 26
+P_i = (C_i - K_(i mod m)) mod 26
+```
+
+Una clave corta y repetida sigue siendo vulnerable al análisis de frecuencias. Implementación: [ciphers/vigenere.py](ciphers/vigenere.py).
+
+### Vernam / XOR
+
+Codifica el mensaje y la clave como bytes UTF-8 y aplica XOR byte a byte. El resultado se convierte a hexadecimal para que viaje limpiamente dentro del JSON:
+
+```text
+C_i = P_i XOR K_i
+P_i = C_i XOR K_i
+```
+
+La clave debe ser al menos tan larga como el mensaje. Si falta o es demasiado corta, la API genera una clave con `secrets`. Para que sea un One-Time Pad real, la clave debe ser aleatoria, tener la misma longitud en bytes, mantenerse secreta y no reutilizarse. La opción de adjuntar `key_shared` es útil para la demostración, pero expone la clave a cualquiera que observe el paquete. Implementación: [ciphers/vernam.py](ciphers/vernam.py).
+
+---
+
+## 10. Instalación, comprobación y diagnóstico
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+
+También se puede ejecutar `iniciar_app.bat`, que crea el entorno virtual si no existe y arranca la aplicación. En PC 2 abrir `http://localhost:5000/receiver`; en PC 1 abrir `http://localhost:5000/sender` y seleccionar como destino `http://192.168.20.10:5000/api/receive`.
+
+Antes de probar HTTP, ejecutar desde PC 1:
+
+```text
+ping 192.168.10.1
+ping 10.0.0.2
+ping 192.168.20.10
+```
+
+Si el ping falla, revisar cableado, IP, gateway, `no shutdown`, el `clock rate` del DCE y las rutas estáticas. Si el ping funciona pero no llega el paquete, comprobar que Flask escuche en `0.0.0.0:5000` y que el firewall de PC 2 permita TCP 5000. Es preferible crear una regla de entrada específica en Windows en lugar de desactivar todo el firewall.
+
+Las pruebas se ejecutan desde la raíz:
+
+```powershell
+python test_ciphers.py
+python test_app_endpoints.py
+```
+
+`test_ciphers.py` verifica el ciclo cifrar-descifrar de los tres algoritmos. `test_app_endpoints.py` verifica la API de cifrado, descifrado, recepción, bandeja y descarga.
+
+---
+
+## 11. Archivos más importantes
+
+- [`app.py`](app.py): servidor Flask, vistas, API y bandeja temporal.
+- [`ciphers/caesar.py`](ciphers/caesar.py), [`ciphers/vigenere.py`](ciphers/vigenere.py), [`ciphers/vernam.py`](ciphers/vernam.py): implementación criptográfica.
+- [`templates/sender.html`](templates/sender.html): captura, cifrado y transmisión desde PC 1.
+- [`templates/receiver.html`](templates/receiver.html): consulta, selección, descifrado y descarga en PC 2.
+- [`templates/index.html`](templates/index.html): diagrama y direccionamiento de la topología.
+- [`network_configs/R1_Router1.txt`](network_configs/R1_Router1.txt) y [`network_configs/R2_Router2.txt`](network_configs/R2_Router2.txt): configuración de los routers.
+- [`network_configs/GUIA_EQUIPOS_REALES.md`](network_configs/GUIA_EQUIPOS_REALES.md): montaje físico y alternativas de WAN.
+- [`requirements.txt`](requirements.txt) e [`iniciar_app.bat`](iniciar_app.bat): dependencias y arranque en Windows.
+
+## 12. Alcance de seguridad
+
+Es una práctica didáctica, no una aplicación de producción: Flask se ejecuta con `debug=True`, no hay autenticación, el transporte es HTTP sin TLS, la bandeja vive en memoria y la clave puede viajar dentro del JSON. En un sistema real habría que desactivar debug, usar HTTPS, autenticar los endpoints, validar tamaño y nombres de archivo, persistir los mensajes de forma controlada y acordar la clave mediante un canal seguro.
