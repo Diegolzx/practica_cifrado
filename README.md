@@ -270,3 +270,9 @@ python test_app_endpoints.py
 ## 12. Alcance de seguridad
 
 Es una práctica didáctica, no una aplicación de producción: Flask se ejecuta con `debug=True`, no hay autenticación, el transporte es HTTP sin TLS, la bandeja vive en memoria y la clave puede viajar dentro del JSON. En un sistema real habría que desactivar debug, usar HTTPS, autenticar los endpoints, validar tamaño y nombres de archivo, persistir los mensajes de forma controlada y acordar la clave mediante un canal seguro.
+
+---
+
+## Derechos de autor
+
+&copy; 2026 Diego Lozano Camargo. Todos los derechos reservados.
